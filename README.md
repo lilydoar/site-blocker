@@ -10,3 +10,4 @@ A CLI to block sites through the systems hosts file
 - Add or remove multiple sites at a time by accepting a list of strings
 - Windows support. Need to locate the hosts file on windows.
 - Give warnings when not run as sudo/admin(windows)
+- Setup a release of this on GitHub

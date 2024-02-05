@@ -144,6 +144,8 @@ impl Blocker {
         let mut file = OpenOptions::new().append(true).open(&self.blocked_sites)?;
         writeln!(file, "{}\n", site)?;
 
+        self.sync_with_hosts()?;
+
         Ok(CommandResponse::Add(AddResponse::Added(site.to_string())))
     }
 
@@ -154,7 +156,22 @@ impl Blocker {
             )));
         }
 
-        // Remove the site from the blocked sites file
+        let file = File::open(&self.blocked_sites)?;
+        let mut new_lines = Vec::new();
+        for line in BufReader::new(file).lines() {
+            let line = line?;
+            if line == site {
+                continue;
+            }
+            new_lines.push(line);
+        }
+
+        let mut file = File::create(&self.blocked_sites)?;
+        for line in new_lines {
+            writeln!(file, "{}", line)?;
+        }
+
+        self.sync_with_hosts()?;
 
         Ok(CommandResponse::Remove(RemoveResponse::Removed(
             site.to_string(),
@@ -167,8 +184,92 @@ impl Blocker {
     }
 
     fn sync_with_hosts(&self) -> Result<(), std::io::Error> {
-        // Update the hosts file to ensure that it matches the blocked sites file
+        Ok(HostsInteractor {
+            hosts: self.hosts.clone(),
+        }
+        .sync_with_blocker(self)?)
+    }
+}
+
+struct HostsInteractor {
+    hosts: PathBuf,
+}
+
+impl HostsInteractor {
+    fn sync_with_blocker(&self, blocker: &Blocker) -> Result<(), std::io::Error> {
+        match self.get_blocker_region()? {
+            Some(_) => (),
+            None => self.create_blocker_region()?,
+        };
+
+        let blocked_sites = blocker.blocked_sites()?;
+
+        let file = File::open(&self.hosts)?;
+
+        let mut new_lines = Vec::new();
+        let mut in_region = false;
+        for line in BufReader::new(file).lines() {
+            let line = line?;
+
+            if line.contains("# END BLOCKER") {
+                in_region = false;
+                for site in &blocked_sites {
+                    new_lines.push(format!("127.0.0.1 {}", site));
+                }
+            }
+
+            if in_region {
+                continue;
+            }
+
+            if line.contains("# BEGIN BLOCKER") {
+                in_region = true;
+            }
+
+            new_lines.push(line);
+        }
+
+        let mut file = File::create(&self.hosts)?;
+        for line in new_lines {
+            writeln!(file, "{}", line)?;
+        }
 
         Ok(())
+    }
+
+    fn create_blocker_region(&self) -> Result<(), std::io::Error> {
+        let mut file = OpenOptions::new().append(true).open(&self.hosts)?;
+        writeln!(file, "\n# BEGIN BLOCKER\n# END BLOCKER\n")?;
+        Ok(())
+    }
+
+    fn get_blocker_region(&self) -> Result<Option<Vec<String>>, std::io::Error> {
+        let mut in_region = false;
+        let mut lines_in_region = Vec::new();
+
+        let file = File::open(&self.hosts)?;
+
+        for line in BufReader::new(file).lines() {
+            let line = line?;
+
+            if line.contains("# BEGIN BLOCKER") {
+                in_region = true;
+                continue;
+            }
+
+            if line.contains("# END BLOCKER") {
+                break;
+            }
+
+            if in_region {
+                lines_in_region.push(line);
+            }
+        }
+
+        if lines_in_region.is_empty() {
+            return Ok(None);
+        }
+
+        Ok(Some(lines_in_region))
     }
 }
