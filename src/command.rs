@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::Subcommand;
 
 use crate::hosts::HostsInteractor;
@@ -29,23 +31,22 @@ pub enum RemoveResponse {
     Removed(String),
 }
 
-pub fn handle_command(
-    command: Command,
-    interactor: HostsInteractor,
-) -> Result<CommandResponse, std::io::Error> {
+pub fn handle_command(command: Command, hosts: PathBuf) -> Result<CommandResponse, std::io::Error> {
+    let interactor = HostsInteractor::new(hosts)?;
+
     match command {
-        Command::List => Ok(CommandResponse::List(interactor.blocked_sites().to_vec())),
+        Command::List => Ok(CommandResponse::List(interactor.blocked_sites())),
         Command::Add { site } => match interactor.blocked_sites().contains(&site) {
             true => Ok(CommandResponse::Add(AddResponse::AlreadyExists(site))),
             false => {
-                interactor.add_site(&site)?;
+                interactor.add_site(&site).write()?;
                 Ok(CommandResponse::Add(AddResponse::Added(site)))
             }
         },
         Command::Remove { site } => match interactor.blocked_sites().contains(&site) {
             false => Ok(CommandResponse::Remove(RemoveResponse::NotFound(site))),
             true => {
-                interactor.remove_site(&site)?;
+                interactor.remove_site(&site).write()?;
                 Ok(CommandResponse::Remove(RemoveResponse::Removed(site)))
             }
         },
