@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use clap::Subcommand;
+use log::info;
 
 use crate::hosts::HostsInteractor;
 
@@ -65,12 +66,12 @@ pub fn write_response(response: CommandResponse) {
             }
         }
         CommandResponse::Add(resp) => match resp {
-            AddResponse::AlreadyExists(site) => println!("{} is already in the block list", site),
-            AddResponse::Added(site) => println!("{} added to the block list", site),
+            AddResponse::AlreadyExists(site) => info!("{} is already blocked", site),
+            AddResponse::Added(site) => println!("{} added", site),
         },
         CommandResponse::Remove(resp) => match resp {
-            RemoveResponse::NotFound(site) => println!("{} is not in the block list", site),
-            RemoveResponse::Removed(site) => println!("{} removed from the block list", site),
+            RemoveResponse::NotFound(site) => info!("{} is not blocked", site),
+            RemoveResponse::Removed(site) => println!("{} removed", site),
         },
     }
 }

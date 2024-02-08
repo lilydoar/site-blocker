@@ -1,8 +1,11 @@
 use std::{
+    fmt::{Display, Formatter},
     fs::File,
     io::{BufRead, BufReader, Write},
     path::PathBuf,
 };
+
+use log::warn;
 
 #[derive(Debug)]
 pub struct HostsInteractor {
@@ -11,10 +14,18 @@ pub struct HostsInteractor {
 
 impl HostsInteractor {
     pub fn new(hosts: &PathBuf) -> Result<Self, std::io::Error> {
-        let lines = read_hosts_file_lines(&hosts)?
+        let lines: Vec<HostsLine> = read_hosts_file_lines(&hosts)?
             .into_iter()
             .map(HostsLine::from)
             .collect();
+
+        for (i, line) in lines
+            .iter()
+            .enumerate()
+            .filter(|(_, line)| matches!(line, HostsLine::Invalid(_)))
+        {
+            warn!("{}:{} Invalid entry: {}", hosts.display(), i, line);
+        }
 
         Ok(Self { lines })
     }
@@ -55,7 +66,7 @@ impl HostsInteractor {
                 std::io::ErrorKind::PermissionDenied => {
                     return Err(std::io::Error::new(
                         std::io::ErrorKind::PermissionDenied,
-                        format!("{} Help: Try using 'sudo'", err),
+                        format!("{}. Try using 'sudo'", err),
                     ));
                 }
                 _ => return Err(err),
@@ -79,7 +90,7 @@ fn read_hosts_file_lines(hosts: &PathBuf) -> Result<Vec<String>, std::io::Error>
             std::io::ErrorKind::NotFound => {
                 return Err(std::io::Error::new(
                     std::io::ErrorKind::NotFound,
-                    format!("Opening hosts file {}: {}", hosts.display(), err),
+                    format!("{}. Opening hosts file {}", hosts.display(), err),
                 ));
             }
             _ => return Err(err),
@@ -124,6 +135,12 @@ impl From<&HostsLine> for String {
             HostsLine::Entry(ip, domain) => format!("{}\t{}", ip, domain),
             HostsLine::Invalid(text) => text.clone(),
         }
+    }
+}
+
+impl Display for HostsLine {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", String::from(self))
     }
 }
 
