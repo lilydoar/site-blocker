@@ -32,7 +32,10 @@ pub enum RemoveResponse {
     Removed(String),
 }
 
-pub fn handle_command(command: Command, hosts: PathBuf) -> Result<CommandResponse, std::io::Error> {
+pub fn handle_command(
+    command: Command,
+    hosts: &PathBuf,
+) -> Result<CommandResponse, std::io::Error> {
     let interactor = HostsInteractor::new(hosts)?;
 
     match command {
@@ -40,14 +43,14 @@ pub fn handle_command(command: Command, hosts: PathBuf) -> Result<CommandRespons
         Command::Add { site } => match interactor.blocked_sites().contains(&site) {
             true => Ok(CommandResponse::Add(AddResponse::AlreadyExists(site))),
             false => {
-                interactor.add_site(&site).write()?;
+                interactor.add_site(&site).write(hosts)?;
                 Ok(CommandResponse::Add(AddResponse::Added(site)))
             }
         },
         Command::Remove { site } => match interactor.blocked_sites().contains(&site) {
             false => Ok(CommandResponse::Remove(RemoveResponse::NotFound(site))),
             true => {
-                interactor.remove_site(&site).write()?;
+                interactor.remove_site(&site).write(hosts)?;
                 Ok(CommandResponse::Remove(RemoveResponse::Removed(site)))
             }
         },

@@ -5,18 +5,17 @@ use std::{
 };
 
 pub struct HostsInteractor {
-    hosts: PathBuf,
     lines: Vec<HostsLine>,
 }
 
 impl HostsInteractor {
-    pub fn new(hosts: PathBuf) -> Result<Self, std::io::Error> {
+    pub fn new(hosts: &PathBuf) -> Result<Self, std::io::Error> {
         let lines = hosts_file_lines(&hosts)?
             .into_iter()
             .map(HostsLine::from)
             .collect();
 
-        Ok(Self { hosts, lines })
+        Ok(Self { lines })
     }
 
     pub fn blocked_sites(&self) -> Vec<String> {
@@ -48,8 +47,20 @@ impl HostsInteractor {
         self
     }
 
-    pub fn write(&self) -> Result<(), std::io::Error> {
-        File::create(&self.hosts)?.write_all(
+    pub fn write(&self, hosts: &PathBuf) -> Result<(), std::io::Error> {
+        let mut file = match File::create(hosts) {
+            Ok(file) => file,
+            Err(err) => match err.kind() {
+                std::io::ErrorKind::PermissionDenied => {
+                    return Err(std::io::Error::new(
+                        std::io::ErrorKind::PermissionDenied,
+                        format!("{} Help: Try using 'sudo'", err),
+                    ));
+                }
+                _ => return Err(err),
+            },
+        };
+        file.write_all(
             self.lines
                 .iter()
                 .map(|line| format!("{}\n", String::from(line)))
@@ -63,14 +74,16 @@ impl HostsInteractor {
 fn hosts_file_lines(hosts: &PathBuf) -> Result<Vec<String>, std::io::Error> {
     let file = match File::open(hosts) {
         Ok(file) => file,
-        Err(err) => {
-            return Err(std::io::Error::new(
-                err.kind(),
-                format!("Opening hosts file {}: {}", hosts.display(), err),
-            ));
-        }
+        Err(err) => match err.kind() {
+            std::io::ErrorKind::NotFound => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    format!("Opening hosts file {}: {}", hosts.display(), err),
+                ));
+            }
+            _ => return Err(err),
+        },
     };
-
     BufReader::new(file).lines().collect()
 }
 

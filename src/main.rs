@@ -17,7 +17,7 @@ struct Cli {
 
 fn main() -> ExitCode {
     let hosts = PathBuf::from("/etc/hosts"); // TODO: Load from config file, env var, or CLI arg
-    let response = match handle_command(Cli::parse().command, hosts) {
+    let response = match handle_command(Cli::parse().command, &hosts) {
         Ok(response) => response,
         Err(err) => {
             eprintln!("Error: {}", err);
