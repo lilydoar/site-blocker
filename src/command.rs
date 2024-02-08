@@ -6,11 +6,12 @@ use crate::hosts::HostsInteractor;
 
 #[derive(Subcommand)]
 pub enum Command {
+    #[command(visible_alias = "ls")]
     #[command(about = "List blocked sites")]
     List,
     #[command(about = "Add a blocked site")]
     Add { site: String },
-    #[command(name = "rm")]
+    #[command(visible_alias = "rm")]
     #[command(about = "Remove a blocked site")]
     Remove { site: String },
 }
