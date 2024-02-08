@@ -1,14 +1,15 @@
 use std::path::PathBuf;
 
-use clap::Parser;
+use clap::{crate_description, crate_name, crate_version, Parser};
 use command::{handle_command, write_response, Command};
 
 mod command;
 mod hosts;
 
 #[derive(Parser)]
-#[command(name = "blocker")]
-#[command(about = "Block sites through the hosts file", long_about = None)]
+#[command(name = crate_name!())]
+#[command(about = crate_description!(), long_about = None)]
+#[command(version = crate_version!())]
 struct Cli {
     #[command(subcommand)]
     command: Command,
