@@ -7,8 +7,13 @@ A CLI to block sites through the systems hosts file
 
 ## todo features
 
-- Add or remove multiple sites at a time by accepting a list of strings
-- Give warnings when not run as sudo/admin(windows)
+- Accept sites as flags instead of positional arguments. Support multiple sites in one call
+- Accept a file containing a list of sites as a flag
+- Add a quiet option
+- Add a verbosity option
+- Load hosts location from various config options. flag, env, config file
 - Setup a release of this on GitHub
-- When run with no arguments open the system's default text editor for raw editing of the blocked sites list
-- Windows support. Need to locate the hosts file on windows.
+- Add an interactive option which opens the system's default text editor for raw editing of the blocked sites
+- Add windows support
+- Add ability to read from stdin
+- Documentation
