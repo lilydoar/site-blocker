@@ -1,5 +1,6 @@
 # site-blocker
 
+![Unit-Test](https://github.com/lilydoar/site-blocker/actions/workflows/test.yaml/badge.svg)
 [![Super-Linter](https://github.com/lilydoar/site-blocker/actions/workflows/lint.yaml/badge.svg)](https://github.com/marketplace/actions/super-linter)
 
 A CLI to block sites through the systems hosts file
