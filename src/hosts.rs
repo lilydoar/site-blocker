@@ -4,13 +4,14 @@ use std::{
     path::PathBuf,
 };
 
+#[derive(Debug)]
 pub struct HostsInteractor {
     lines: Vec<HostsLine>,
 }
 
 impl HostsInteractor {
     pub fn new(hosts: &PathBuf) -> Result<Self, std::io::Error> {
-        let lines = hosts_file_lines(&hosts)?
+        let lines = read_hosts_file_lines(&hosts)?
             .into_iter()
             .map(HostsLine::from)
             .collect();
@@ -71,7 +72,7 @@ impl HostsInteractor {
     }
 }
 
-fn hosts_file_lines(hosts: &PathBuf) -> Result<Vec<String>, std::io::Error> {
+fn read_hosts_file_lines(hosts: &PathBuf) -> Result<Vec<String>, std::io::Error> {
     let file = match File::open(hosts) {
         Ok(file) => file,
         Err(err) => match err.kind() {
@@ -87,6 +88,7 @@ fn hosts_file_lines(hosts: &PathBuf) -> Result<Vec<String>, std::io::Error> {
     BufReader::new(file).lines().collect()
 }
 
+#[derive(Debug, PartialEq)]
 enum HostsLine {
     Empty,
     Comment(String),
@@ -134,5 +136,138 @@ impl HostsLine {
             }
             _ => None,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::create_dir_all;
+
+    use tempdir::TempDir;
+
+    use super::*;
+
+    #[test]
+    fn test_hosts_line_from_string() {
+        assert_eq!(HostsLine::from("".to_string()), HostsLine::Empty);
+        assert_eq!(
+            HostsLine::from("# This is a comment".to_string()),
+            HostsLine::Comment("# This is a comment".to_string())
+        );
+        assert_eq!(
+            HostsLine::from("127.0.0.1 localhost".to_string()),
+            HostsLine::Entry("127.0.0.1".to_string(), "localhost".to_string())
+        );
+        assert_eq!(
+            HostsLine::from("::1 localhost".to_string()),
+            HostsLine::Entry("::1".to_string(), "localhost".to_string())
+        );
+        assert_eq!(
+            HostsLine::from("Not a valid line".to_string()),
+            HostsLine::Invalid("Not a valid line".to_string())
+        );
+    }
+
+    #[test]
+    fn test_string_from_hosts_line() {
+        assert_eq!(String::from(&HostsLine::Empty), "".to_string());
+        assert_eq!(
+            String::from(&HostsLine::Comment("# This is a comment".to_string())),
+            "# This is a comment".to_string()
+        );
+        assert_eq!(
+            String::from(&HostsLine::Entry(
+                "127.0.0.1".to_string(),
+                "localhost".to_string()
+            )),
+            "127.0.0.1\tlocalhost".to_string()
+        );
+        assert_eq!(
+            String::from(&HostsLine::Invalid("Not a valid line".to_string())),
+            "Not a valid line".to_string()
+        );
+    }
+
+    #[test]
+    fn test_directs_to_localhost() {
+        assert_eq!(
+            HostsLine::Entry("127.0.0.1".to_string(), "localhost".to_string())
+                .directs_to_localhost(),
+            None
+        );
+        assert_eq!(
+            HostsLine::Entry("127.0.0.1".to_string(), "example.com".to_string())
+                .directs_to_localhost(),
+            Some("example.com".to_string())
+        );
+        assert_eq!(
+            HostsLine::Entry("::1".to_string(), "example.com".to_string()).directs_to_localhost(),
+            Some("example.com".to_string())
+        );
+        assert_eq!(
+            HostsLine::Comment("# This is a comment".to_string()).directs_to_localhost(),
+            None
+        );
+    }
+
+    #[test]
+    fn test_add_site() {
+        let interactor = HostsInteractor { lines: Vec::new() };
+        let interactor = interactor.add_site("example.com");
+        assert_eq!(interactor.lines.len(), 1);
+        assert_eq!(
+            interactor.lines[0],
+            HostsLine::Entry("127.0.0.1".to_string(), "example.com".to_string())
+        );
+    }
+
+    #[test]
+    fn test_remove_site() {
+        let interactor = HostsInteractor {
+            lines: vec![HostsLine::Entry(
+                "127.0.0.1".to_string(),
+                "example.com".to_string(),
+            )],
+        };
+        let interactor = interactor.remove_site("example.com");
+        assert_eq!(interactor.lines.len(), 0);
+    }
+
+    #[test]
+    fn test_read_and_write() -> Result<(), std::io::Error> {
+        let hosts = create_mock_hosts_file()?;
+        let interactor = HostsInteractor {
+            lines: vec![
+                HostsLine::Comment("# This is a comment".to_string()),
+                HostsLine::Empty,
+                HostsLine::Entry("127.0.0.1".to_string(), "localhost".to_string()),
+                HostsLine::Entry("::1".to_string(), "localhost".to_string()),
+                HostsLine::Invalid("Not a valid line".to_string()),
+            ],
+        };
+
+        interactor.write(&hosts)?;
+        let loaded_interactor = HostsInteractor::new(&hosts)?;
+        assert_eq!(interactor.lines, loaded_interactor.lines);
+
+        Ok(())
+    }
+
+    fn create_mock_hosts_file() -> Result<PathBuf, std::io::Error> {
+        let hosts = TempDir::new("tests")
+            .unwrap()
+            .path()
+            .join("mock_hosts")
+            .to_path_buf();
+
+        let parent = hosts.parent().unwrap();
+        create_dir_all(&parent)?;
+
+        let mut file = File::create(&hosts)?;
+        let contents =
+            "# This is a comment\n\n127.0.0.1\tlocalhost\n::1\tlocalhost\nNot a valid line\n";
+        file.write_all(contents.as_bytes())?;
+
+        Ok(hosts)
     }
 }
