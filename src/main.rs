@@ -1,11 +1,13 @@
 use std::{path::PathBuf, process::ExitCode};
 
-use clap::{crate_description, crate_name, crate_version, Parser};
+use clap::{crate_description, crate_name, crate_version, ArgAction, Parser};
 use command::{handle_command, write_response, Command};
 use log::error;
 
 mod command;
 mod hosts;
+
+const DEFAULT_LOG_LEVEL: usize = 2;
 
 #[derive(Parser)]
 #[command(name = crate_name!())]
@@ -14,13 +16,21 @@ mod hosts;
 struct Cli {
     #[command(subcommand)]
     command: Command,
+    #[arg(short, long, action = ArgAction::SetTrue)]
+    #[arg(help = "Suppress log output")]
+    quiet: bool,
+    #[arg(short, long, action = ArgAction::Count)]
+    #[arg(help = "Set the log level (repeat for more logs)")]
+    verbose: u8,
 }
 
 fn main() -> ExitCode {
+    let cli = Cli::parse();
+
     if let Err(err) = stderrlog::new()
         .module(module_path!())
-        .verbosity(log::Level::Info)
-        .quiet(false)
+        .verbosity(DEFAULT_LOG_LEVEL + cli.verbose as usize)
+        .quiet(cli.quiet)
         .init()
     {
         eprintln!("Error: failed to initialize logging: {}", err);
@@ -28,7 +38,7 @@ fn main() -> ExitCode {
     }
 
     let hosts = PathBuf::from("/etc/hosts"); // TODO: Load from config file, env var, or CLI arg
-    let response = match handle_command(Cli::parse().command, &hosts) {
+    let response = match handle_command(cli.command, &hosts) {
         Ok(response) => response,
         Err(err) => {
             error!("{}", err);

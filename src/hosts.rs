@@ -5,7 +5,7 @@ use std::{
     path::PathBuf,
 };
 
-use log::warn;
+use log::{debug, trace, warn};
 
 #[derive(Debug)]
 pub struct HostsInteractor {
@@ -14,6 +14,7 @@ pub struct HostsInteractor {
 
 impl HostsInteractor {
     pub fn new(hosts: &PathBuf) -> Result<Self, std::io::Error> {
+        debug!("creating hosts interactor for: {}", hosts.display());
         let lines: Vec<HostsLine> = read_hosts_file_lines(&hosts)?
             .into_iter()
             .map(HostsLine::from)
@@ -38,6 +39,7 @@ impl HostsInteractor {
     }
 
     pub fn add_site(mut self, site: &str) -> Self {
+        debug!("adding site {} at line {}", site, self.lines.len());
         if !self.blocked_sites().contains(&site.to_string()) {
             self.lines
                 .push(HostsLine::Entry("127.0.0.1".to_string(), site.to_string()));
@@ -53,6 +55,7 @@ impl HostsInteractor {
             .position(|line| line.directs_to_localhost() == Some(site.to_string()));
 
         if let Some(index) = index {
+            debug!("removing site {} at line {}", site, index);
             let _ = self.lines.remove(index);
         }
 
@@ -60,6 +63,7 @@ impl HostsInteractor {
     }
 
     pub fn write(&self, hosts: &PathBuf) -> Result<(), std::io::Error> {
+        debug!("writing hosts file: {}", hosts.display());
         let mut file = match File::create(hosts) {
             Ok(file) => file,
             Err(err) => match err.kind() {
@@ -72,6 +76,7 @@ impl HostsInteractor {
                 _ => return Err(err),
             },
         };
+        trace!("writing lines:\n{:?}", self.lines);
         file.write_all(
             self.lines
                 .iter()
@@ -84,6 +89,7 @@ impl HostsInteractor {
 }
 
 fn read_hosts_file_lines(hosts: &PathBuf) -> Result<Vec<String>, std::io::Error> {
+    debug!("reading hosts file: {}", hosts.display());
     let file = match File::open(hosts) {
         Ok(file) => file,
         Err(err) => match err.kind() {
@@ -190,18 +196,18 @@ mod tests {
         assert_eq!(String::from(&HostsLine::Empty), "".to_string());
         assert_eq!(
             String::from(&HostsLine::Comment("# This is a comment".to_string())),
-            "# This is a comment".to_string()
+            "# This is a comment"
         );
         assert_eq!(
             String::from(&HostsLine::Entry(
                 "127.0.0.1".to_string(),
                 "localhost".to_string()
             )),
-            "127.0.0.1\tlocalhost".to_string()
+            "127.0.0.1\tlocalhost"
         );
         assert_eq!(
             String::from(&HostsLine::Invalid("Not a valid line".to_string())),
-            "Not a valid line".to_string()
+            "Not a valid line"
         );
     }
 

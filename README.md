@@ -9,11 +9,10 @@ A CLI to block sites through the systems hosts file
 
 - Accept sites as flags instead of positional arguments. Support multiple sites in one call
 - Accept a file containing a list of sites as a flag
-- Add a quiet option
-- Add a verbosity option
 - Load hosts location from various config options. flag, env, config file
 - Setup a release of this on GitHub
 - Add an interactive option which opens the system's default text editor for raw editing of the blocked sites
 - Add windows support
 - Add ability to read from stdin
 - Documentation
+- Add option to disable color

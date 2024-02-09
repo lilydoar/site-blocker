@@ -1,11 +1,11 @@
 use std::path::PathBuf;
 
 use clap::Subcommand;
-use log::info;
+use log::{debug, info};
 
 use crate::hosts::HostsInteractor;
 
-#[derive(Subcommand)]
+#[derive(Subcommand, Debug)]
 pub enum Command {
     #[command(visible_alias = "ls")]
     #[command(about = "List blocked sites")]
@@ -17,17 +17,20 @@ pub enum Command {
     Remove { site: String },
 }
 
+#[derive(Debug)]
 pub enum CommandResponse {
     List(Vec<String>),
     Add(AddResponse),
     Remove(RemoveResponse),
 }
 
+#[derive(Debug)]
 pub enum AddResponse {
     AlreadyExists(String),
     Added(String),
 }
 
+#[derive(Debug)]
 pub enum RemoveResponse {
     NotFound(String),
     Removed(String),
@@ -39,6 +42,7 @@ pub fn handle_command(
 ) -> Result<CommandResponse, std::io::Error> {
     let interactor = HostsInteractor::new(hosts)?;
 
+    debug!("handling command: {:?}", command);
     match command {
         Command::List => Ok(CommandResponse::List(interactor.blocked_sites())),
         Command::Add { site } => match interactor.blocked_sites().contains(&site) {
@@ -59,6 +63,7 @@ pub fn handle_command(
 }
 
 pub fn write_response(response: CommandResponse) {
+    debug!("writing response: {:?}", response);
     match response {
         CommandResponse::List(sites) => {
             for site in sites {
@@ -67,11 +72,11 @@ pub fn write_response(response: CommandResponse) {
         }
         CommandResponse::Add(resp) => match resp {
             AddResponse::AlreadyExists(site) => info!("{} is already blocked", site),
-            AddResponse::Added(site) => println!("{} added", site),
+            AddResponse::Added(site) => info!("{} added", site),
         },
         CommandResponse::Remove(resp) => match resp {
             RemoveResponse::NotFound(site) => info!("{} is not blocked", site),
-            RemoveResponse::Removed(site) => println!("{} removed", site),
+            RemoveResponse::Removed(site) => info!("{} removed", site),
         },
     }
 }
