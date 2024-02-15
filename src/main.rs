@@ -9,21 +9,6 @@ mod hosts;
 
 const DEFAULT_LOG_LEVEL: usize = 2;
 
-#[derive(Parser)]
-#[command(name = crate_name!())]
-#[command(about = crate_description!(), long_about = None)]
-#[command(version = crate_version!())]
-struct Cli {
-    #[command(subcommand)]
-    command: Command,
-    #[arg(short, long, action = ArgAction::SetTrue)]
-    #[arg(help = "Suppress log output")]
-    quiet: bool,
-    #[arg(short, long, action = ArgAction::Count)]
-    #[arg(help = "Set the log level (repeat for more logs)")]
-    verbose: u8,
-}
-
 fn main() -> ExitCode {
     let cli = Cli::parse();
 
@@ -47,4 +32,18 @@ fn main() -> ExitCode {
     };
     write_response(response);
     ExitCode::SUCCESS
+}
+
+#[derive(Parser)]
+#[command(name = crate_name!())]
+#[command(about = crate_description!(), long_about = None, version = crate_version!())]
+struct Cli {
+    #[command(subcommand)]
+    command: Command,
+    #[arg(short, long, action = ArgAction::SetTrue)]
+    #[arg(help = "Suppress log output")]
+    quiet: bool,
+    #[arg(short, long, action = ArgAction::Count)]
+    #[arg(help = "Set the log level (repeat for more logs)")]
+    verbose: u8,
 }

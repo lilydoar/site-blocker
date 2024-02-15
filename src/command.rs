@@ -11,17 +11,23 @@ pub enum Command {
     #[command(about = "List blocked sites")]
     List,
     #[command(about = "Add a blocked site")]
-    Add { site: String },
+    Add {
+        #[arg(short, long, required = true)]
+        site: Vec<String>,
+    },
     #[command(visible_alias = "rm")]
     #[command(about = "Remove a blocked site")]
-    Remove { site: String },
+    Remove {
+        #[arg(short, long, required = true)]
+        site: Vec<String>,
+    },
 }
 
 #[derive(Debug)]
 pub enum CommandResponse {
     List(Vec<String>),
-    Add(AddResponse),
-    Remove(RemoveResponse),
+    Add(Vec<AddResponse>),
+    Remove(Vec<RemoveResponse>),
 }
 
 #[derive(Debug)]
@@ -40,25 +46,39 @@ pub fn handle_command(
     command: Command,
     hosts: &PathBuf,
 ) -> Result<CommandResponse, std::io::Error> {
-    let interactor = HostsInteractor::new(hosts)?;
+    let mut interactor = HostsInteractor::new(hosts)?;
 
     debug!("handling command: {:?}", command);
     match command {
         Command::List => Ok(CommandResponse::List(interactor.blocked_sites())),
-        Command::Add { site } => match interactor.blocked_sites().contains(&site) {
-            true => Ok(CommandResponse::Add(AddResponse::AlreadyExists(site))),
-            false => {
-                interactor.add_site(&site).write(hosts)?;
-                Ok(CommandResponse::Add(AddResponse::Added(site)))
-            }
-        },
-        Command::Remove { site } => match interactor.blocked_sites().contains(&site) {
-            false => Ok(CommandResponse::Remove(RemoveResponse::NotFound(site))),
-            true => {
-                interactor.remove_site(&site).write(hosts)?;
-                Ok(CommandResponse::Remove(RemoveResponse::Removed(site)))
-            }
-        },
+        Command::Add { site } => {
+            let responses = site
+                .into_iter()
+                .map(|s| match interactor.blocked_sites().contains(&s) {
+                    true => AddResponse::AlreadyExists(s),
+                    false => {
+                        interactor.add_site(&s);
+                        AddResponse::Added(s)
+                    }
+                })
+                .collect();
+            interactor.write(hosts)?;
+            Ok(CommandResponse::Add(responses))
+        }
+        Command::Remove { site } => {
+            let responses = site
+                .into_iter()
+                .map(|s| match interactor.blocked_sites().contains(&s) {
+                    false => RemoveResponse::NotFound(s),
+                    true => {
+                        interactor.remove_site(&s);
+                        RemoveResponse::Removed(s)
+                    }
+                })
+                .collect();
+            interactor.write(hosts)?;
+            Ok(CommandResponse::Remove(responses))
+        }
     }
 }
 
@@ -70,13 +90,21 @@ pub fn write_response(response: CommandResponse) {
                 println!("{}", site);
             }
         }
-        CommandResponse::Add(resp) => match resp {
-            AddResponse::AlreadyExists(site) => info!("{} is already blocked", site),
-            AddResponse::Added(site) => info!("{} added", site),
-        },
-        CommandResponse::Remove(resp) => match resp {
-            RemoveResponse::NotFound(site) => info!("{} is not blocked", site),
-            RemoveResponse::Removed(site) => info!("{} removed", site),
-        },
+        CommandResponse::Add(responses) => {
+            for resp in responses {
+                match resp {
+                    AddResponse::AlreadyExists(site) => info!("{} is already blocked", site),
+                    AddResponse::Added(site) => info!("{} added", site),
+                }
+            }
+        }
+        CommandResponse::Remove(responses) => {
+            for resp in responses {
+                match resp {
+                    RemoveResponse::NotFound(site) => info!("{} is not blocked", site),
+                    RemoveResponse::Removed(site) => info!("{} removed", site),
+                }
+            }
+        }
     }
 }

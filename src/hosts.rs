@@ -15,7 +15,7 @@ pub struct HostsInteractor {
 impl HostsInteractor {
     pub fn new(hosts: &PathBuf) -> Result<Self, std::io::Error> {
         debug!("creating hosts interactor for: {}", hosts.display());
-        let lines: Vec<HostsLine> = read_hosts_file_lines(&hosts)?
+        let lines: Vec<HostsLine> = read_hosts_file_lines(hosts)?
             .into_iter()
             .map(HostsLine::from)
             .collect();
@@ -38,17 +38,15 @@ impl HostsInteractor {
             .collect()
     }
 
-    pub fn add_site(mut self, site: &str) -> Self {
+    pub fn add_site(&mut self, site: &str) {
         debug!("adding site {} at line {}", site, self.lines.len());
         if !self.blocked_sites().contains(&site.to_string()) {
             self.lines
                 .push(HostsLine::Entry("127.0.0.1".to_string(), site.to_string()));
         }
-
-        self
     }
 
-    pub fn remove_site(mut self, site: &str) -> Self {
+    pub fn remove_site(&mut self, site: &str) {
         let index = self
             .lines
             .iter()
@@ -58,8 +56,6 @@ impl HostsInteractor {
             debug!("removing site {} at line {}", site, index);
             let _ = self.lines.remove(index);
         }
-
-        self
     }
 
     pub fn write(&self, hosts: &PathBuf) -> Result<(), std::io::Error> {
@@ -235,8 +231,8 @@ mod tests {
 
     #[test]
     fn test_add_site() {
-        let interactor = HostsInteractor { lines: Vec::new() };
-        let interactor = interactor.add_site("example.com");
+        let mut interactor = HostsInteractor { lines: Vec::new() };
+        interactor.add_site("example.com");
         assert_eq!(interactor.lines.len(), 1);
         assert_eq!(
             interactor.lines[0],
@@ -246,13 +242,13 @@ mod tests {
 
     #[test]
     fn test_remove_site() {
-        let interactor = HostsInteractor {
+        let mut interactor = HostsInteractor {
             lines: vec![HostsLine::Entry(
                 "127.0.0.1".to_string(),
                 "example.com".to_string(),
             )],
         };
-        let interactor = interactor.remove_site("example.com");
+        interactor.remove_site("example.com");
         assert_eq!(interactor.lines.len(), 0);
     }
 
@@ -284,7 +280,7 @@ mod tests {
             .to_path_buf();
 
         let parent = hosts.parent().unwrap();
-        create_dir_all(&parent)?;
+        create_dir_all(parent)?;
 
         let mut file = File::create(&hosts)?;
         let contents =

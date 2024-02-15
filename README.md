@@ -7,7 +7,6 @@ A CLI to block sites through the systems hosts file
 
 ## todo features
 
-- Accept sites as flags instead of positional arguments. Support multiple sites in one call
 - Accept a file containing a list of sites as a flag
 - Load hosts location from various config options. flag, env, config file
 - Setup a release of this on GitHub
@@ -16,3 +15,4 @@ A CLI to block sites through the systems hosts file
 - Add ability to read from stdin
 - Documentation
 - Add option to disable color
+- Add autoformatting to the GitHub actions
