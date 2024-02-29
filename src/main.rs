@@ -22,7 +22,7 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
 
-    let hosts = PathBuf::from("/etc/hosts"); // TODO: Load from config file, env var, or CLI arg
+    let hosts = PathBuf::from(cli.hosts_file);
     let response = match handle_command(cli.command, &hosts) {
         Ok(response) => response,
         Err(err) => {
@@ -40,6 +40,9 @@ fn main() -> ExitCode {
 struct Cli {
     #[command(subcommand)]
     command: Command,
+    #[arg(long, env, default_value = "/etc/hosts")]
+    #[arg(help = "Set a custom hosts file path")]
+    hosts_file: PathBuf,
     #[arg(short, long, action = ArgAction::SetTrue)]
     #[arg(help = "Suppress log output")]
     quiet: bool,

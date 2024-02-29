@@ -40,7 +40,6 @@ Or download the latest [release](https://github.com/lilydoar/site-blocker/releas
 ## todo features
 
 - Accept a file containing a list of sites as a flag
-- Load hosts location from various config options. flag, env, config file
 - Setup a release of this on GitHub
 - Add an edit command which opens the system's default text editor for raw editing of the blocked sites
 - Add windows support
@@ -48,4 +47,3 @@ Or download the latest [release](https://github.com/lilydoar/site-blocker/releas
 - Add option to disable color
 - Add autoformatting to the GitHub actions
 - Publish CLI on crates.io
-
