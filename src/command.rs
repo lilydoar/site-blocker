@@ -1,3 +1,4 @@
+use std::io::Write;
 use std::path::PathBuf;
 
 use clap::Subcommand;
@@ -21,6 +22,8 @@ pub enum Command {
         #[arg(short, long, required = true)]
         site: Vec<String>,
     },
+    #[command(about = "Edit blocked sites in $EDITOR")]
+    Edit,
 }
 
 #[derive(Debug)]
@@ -28,6 +31,7 @@ pub enum CommandResponse {
     List(Vec<String>),
     Add(Vec<AddResponse>),
     Remove(Vec<RemoveResponse>),
+    Edit,
 }
 
 #[derive(Debug)]
@@ -80,6 +84,52 @@ pub fn handle_command(
             interactor.write(hosts)?;
             Ok(CommandResponse::Remove(responses))
         }
+        Command::Edit => {
+            let editor = std::env::var("EDITOR").unwrap_or("vi".to_string());
+            let sites = interactor.blocked_sites().join("\n");
+
+            let mut file = tempfile::NamedTempFile::new()?;
+            write!(file, "# Add sites to block, one per line.\n# Lines starting with # will be ignored.\n")?;
+            write!(file, "{}", sites)?;
+            let path = file.into_temp_path();
+
+            let status = std::process::Command::new(editor).arg(&path).status()?;
+
+            if !status.success() {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "editor failed",
+                ));
+            }
+
+            let new_sites = std::fs::read_to_string(path)?
+                .split('\n')
+                .map(|s| s.to_string())
+                .filter(|s| !s.is_empty())
+                .filter(|s| !s.starts_with('#'))
+                .collect::<Vec<String>>();
+
+            for site in &new_sites {
+                if !validate_site(&site) {
+                    return Ok(CommandResponse::Edit);
+                }
+            }
+
+            for site in interactor.blocked_sites() {
+                if !new_sites.contains(&site) {
+                    interactor.remove_site(&site);
+                }
+            }
+
+            for site in new_sites {
+                if !interactor.blocked_sites().contains(&site) {
+                    interactor.add_site(&site);
+                }
+            }
+
+            interactor.write(hosts)?;
+            Ok(CommandResponse::Edit)
+        }
     }
 }
 
@@ -107,6 +157,7 @@ pub fn write_response(response: CommandResponse) {
                 }
             }
         }
+        CommandResponse::Edit => {}
     }
 }
 

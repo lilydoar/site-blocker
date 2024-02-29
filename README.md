@@ -29,6 +29,8 @@ sudo site-blocker remove --site www.example.com
 INFO www.example.com removed
 ```
 
+Warning: Many browsers require their cache to be cleared before they reflect changes to the hosts file. 
+
 ## Installation
 
 ```shell
@@ -40,10 +42,9 @@ Or download the latest [release](https://github.com/lilydoar/site-blocker/releas
 ## todo features
 
 - Accept a file containing a list of sites as a flag
-- Setup a release of this on GitHub
-- Add an edit command which opens the system's default text editor for raw editing of the blocked sites
 - Add windows support
 - Add ability to read from stdin
 - Add option to disable color
-- Add autoformatting to the GitHub actions
+- Setup a release of this on GitHub
 - Publish CLI on crates.io
+- Add autoformatting to the GitHub actions
