@@ -54,6 +54,7 @@ pub fn handle_command(
         Command::Add { site } => {
             let responses = site
                 .into_iter()
+                .filter(|s| validate_site(s))
                 .map(|s| match interactor.blocked_sites().contains(&s) {
                     true => AddResponse::AlreadyExists(s),
                     false => {
@@ -107,4 +108,23 @@ pub fn write_response(response: CommandResponse) {
             }
         }
     }
+}
+
+fn validate_site(site: &str) -> bool {
+    if site.is_empty() {
+        info!("site cannot be empty");
+        return false;
+    }
+
+    if site.chars().any(|c| c.is_whitespace()) {
+        info!("site cannot contain whitespace");
+        return false;
+    }
+
+    if !site.chars().all(|c| c.is_ascii()) {
+        info!("site must be ascii");
+        return false;
+    }
+
+    true
 }
