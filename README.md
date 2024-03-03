@@ -11,10 +11,10 @@ A CLI to block sites through the systems hosts file.
 site-blocker [OPTIONS] <COMMAND>
 
 Commands:
-  list    List blocked sites [aliases: ls]
-  add     Add a blocked site
-  remove  Remove a blocked site [aliases: rm]
-  help    Print this message or the help of the given subcommand(s)
+  get     Get blocked sites
+  add     Add blocked sites
+  delete  Remove blocked sites
+  edit    Edit blocked sites through system editor
 ```
 
 ```shell
@@ -22,14 +22,14 @@ sudo site-blocker list
 www.example.com
 www.example2.com
 
-sudo site-blocker add --site www.example.com
+sudo site-blocker add www.example.com
 INFO www.example.com added
 
-sudo site-blocker remove --site www.example.com
-INFO www.example.com removed
+sudo site-blocker delete www.example.com
+INFO www.example.com deleted
 ```
 
-Warning: Many browsers require their cache to be cleared before they reflect changes to the hosts file. 
+Warning: Browsers require their cache to be cleared before they reflect changes to the hosts file.
 
 ## Installation
 
@@ -41,10 +41,7 @@ Or download the latest [release](https://github.com/lilydoar/site-blocker/releas
 
 ## todo features
 
-- Accept a file containing a list of sites as a flag
-- Add windows support
-- Add ability to read from stdin
-- Add option to disable color
+- Check for write permission before trying to write. This will make output less confusing
 - Setup a release of this on GitHub
 - Publish CLI on crates.io
 - Add autoformatting to the GitHub actions
