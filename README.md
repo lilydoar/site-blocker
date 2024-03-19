@@ -5,6 +5,14 @@
 
 A CLI to block sites through the systems hosts file.
 
+## Installation
+
+```shell
+cargo install site-blocker
+```
+
+This CLI does not natively support Windows and has not been tested on it. However, nothing is stopping it from working since the hosts file path can be configured as an option. Try it out and create an issue if there are problems.
+
 ## Usage
 
 ```shell
@@ -31,11 +39,3 @@ INFO www.example.com deleted
 ```
 
 Browsers usually require their cache to be cleared before they reflect changes to the hosts file.
-
-## Installation
-
-```shell
-cargo install --git https://github.com/lilydoar/site-blocker.git
-```
-
-This CLI does not natively support Windows and has not been tested on it. However, nothing is stopping it from working since the hosts file path can be configured as an option. Try it out and create an issue for any issues found.
