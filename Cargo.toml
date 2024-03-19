@@ -3,6 +3,9 @@ name = "site-blocker"
 version = "0.1.0"
 edition = "2021"
 description = "A CLI to block sites through the systems hosts file"
+repository = "https://github.com/lilydoar/site-blocker"
+license = "MIT"
+exclude = [".github/", ".gitignore"]
 
 [dependencies]
 anyhow = "1.0.80"

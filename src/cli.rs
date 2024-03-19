@@ -21,7 +21,7 @@ pub struct Cli {
 
     #[arg(
         long,
-        env,
+        env = "SITE_BLOCKER_HOSTS_FILE",
         value_name = "FILE",
         default_value = "/etc/hosts",
         help = "Set a custom hosts file path"
