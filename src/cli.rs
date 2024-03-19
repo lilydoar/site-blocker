@@ -40,16 +40,16 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
-    #[command(about = "Get blocked sites", alias = "ls")]
+    #[command(about = "Get blocked sites", visible_alias = "ls")]
     Get,
 
     #[command(about = "Add blocked sites")]
     Add(SiteOptions),
 
-    #[command(about = "Remove blocked sites", alias = "rm")]
+    #[command(about = "Remove blocked sites", visible_alias = "rm")]
     Delete(SiteOptions),
 
-    #[command(about = "Edit blocked sites through $EDITOR")]
+    #[command(about = "Edit blocked sites in an editor")]
     Edit,
 }
 

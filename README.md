@@ -15,27 +15,32 @@ This CLI does not natively support Windows and has not been tested on it. Howeve
 
 ## Usage
 
-```shell
+```
 site-blocker [OPTIONS] <COMMAND>
 
 Commands:
-  get     Get blocked sites
+  get     Get blocked sites [aliases: ls]
   add     Add blocked sites
-  delete  Remove blocked sites
-  edit    Edit blocked sites through system editor
+  delete  Remove blocked sites [aliases: rm]
+  edit    Edit blocked sites in an editor
 ```
 
-```shell
+Browsers usually require their cache to be cleared before they reflect changes to the hosts file.
+
+### Examples
+
+
+```
 sudo site-blocker add www.example.com www.example2.com
 INFO www.example.com added
 INFO www.example2.com added
 
-sudo site-blocker list
+site-blocker list
 www.example.com
 www.example2.com
 
 sudo site-blocker delete www.example.com
 INFO www.example.com deleted
-```
 
-Browsers usually require their cache to be cleared before they reflect changes to the hosts file.
+sudo site-blocker edit
+```
