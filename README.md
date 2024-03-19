@@ -29,7 +29,7 @@ sudo site-blocker delete www.example.com
 INFO www.example.com deleted
 ```
 
-Warning: Browsers require their cache to be cleared before they reflect changes to the hosts file.
+Browsers usually require their cache to be cleared before they reflect changes to the hosts file.
 
 ## Installation
 
@@ -44,4 +44,3 @@ Or download the latest [release](https://github.com/lilydoar/site-blocker/releas
 - Check for write permission before trying to write. This will make output less confusing
 - Setup a release of this on GitHub
 - Publish CLI on crates.io
-- Add autoformatting to the GitHub actions
