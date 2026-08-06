@@ -1,8 +1,6 @@
 use std::io::{BufRead, Write};
 
-use clap::{
-    command, crate_description, crate_name, crate_version, ArgAction, Args, Parser, Subcommand,
-};
+use clap::{crate_description, crate_name, crate_version, ArgAction, Args, Parser, Subcommand};
 use log::trace;
 
 use crate::hosts::HostsFile;
@@ -191,10 +189,7 @@ fn read_editor(blocked_sites: Vec<String>) -> std::io::Result<Vec<String>> {
     trace!("editing file: {:?} in {}", path, editor);
     let status = std::process::Command::new(editor).arg(&path).status()?;
     if !status.success() {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "Editor failed",
-        ));
+        return Err(std::io::Error::other("Editor failed"));
     }
 
     Ok(std::fs::read_to_string(&path)?

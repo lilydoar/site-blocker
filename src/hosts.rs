@@ -128,7 +128,7 @@ impl HostsFile {
 impl From<&str> for HostsLine {
     fn from(line: &str) -> Self {
         match line {
-            line if line.is_empty() => HostsLine::Empty,
+            "" => HostsLine::Empty,
             line if line.starts_with('#') => HostsLine::Comment(line.to_string()),
             line if line.starts_with(LOCALHOST_IPV4) || line.starts_with(LOCALHOST_IPV6) => {
                 let mut parts = line.split_whitespace().peekable();
